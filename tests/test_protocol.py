@@ -1,6 +1,6 @@
 import unittest
 
-from Common.protocol import (
+from common.protocol import (
     pack_offer, unpack_offer,
     pack_request, unpack_request,
     pack_payload_decision, unpack_payload_decision,

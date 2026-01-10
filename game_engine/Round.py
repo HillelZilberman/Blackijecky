@@ -1,5 +1,5 @@
-from GameEngine.Deck import Deck
-from GameEngine.Hand import Hand
+from game_engine.Deck import Deck
+from game_engine.Hand import Hand
 from enum import Enum
 
 decision = {"HIT", "STAND"}

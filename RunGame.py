@@ -2,7 +2,7 @@
 # Run from your project root:
 #   python run_game.py
 
-from GameEngine.Round import Round, RoundState
+from game_engine.Round import Round, RoundState
 
 
 def format_hand(hand, hide_second=False):
