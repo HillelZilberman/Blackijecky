@@ -1,4 +1,4 @@
-VALUE_TO_STR = {
+RANK_TO_STR = {
     1: "A",
     11: "J",
     12: "Q",
@@ -14,20 +14,22 @@ SUIT_TO_STR = {
 
 
 class Card:
-    def __init__(self,value,suit):
-        self.value = value
+    def __init__(self,rank,suit):
+        self.rank = rank
         self.suit = suit
 
+    def get_value(self):
+        if self.rank > 10:
+            return 10
+        elif self.rank == 1:
+            return 11
+        return self.rank
+
     def __str__(self):
-        value_str = VALUE_TO_STR.get(self.value, str(self.value))
+        rank_str = RANK_TO_STR.get(self.rank, str(self.rank))
         suit_str = SUIT_TO_STR.get(self.suit, str(self.suit))
-        return value_str + suit_str
+        return rank_str + suit_str
 
 
 
-def main():
-    card = Card(10, 11)
-    print(card)
 
-if __name__ == '__main__':
-    main()

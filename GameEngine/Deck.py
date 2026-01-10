@@ -1,16 +1,23 @@
+import random
+
+from GameEngine.Card import Card
+
 class Deck:
     def __init__(self):
         self.deck = []
+        for suit in range(4):
+            for value in range(1,14):
+                self.deck.append(Card(value, suit))
 
-    def add_card(self, card):
-        self.deck.append(card)
+    def shuffle(self):
+        random.shuffle(self.deck)
 
-    def __str__(self):
-        deck_str = ""
-        for card in self.deck:
-            deck_str += card.__str__() + "\n"
+    def draw(self):
+        return self.deck.pop()
 
-def main (self):
-    card = Card(1, 0)
-    return card
+    def get_length(self):
+        return len(self.deck)
+
+
+
 
