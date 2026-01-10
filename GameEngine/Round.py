@@ -3,7 +3,7 @@ from GameEngine.Hand import Hand
 from enum import Enum
 
 decision = {"HIT", "STAND"}
-outcome = {"WIN", "LOSS", "TIE"}
+outcome = {"WIN", "LOSS", "TIE", "BLACKJACK"}
 
 class RoundState(Enum):
     PLAYER_TURN = 0
@@ -24,6 +24,9 @@ class Round():
         for card in range(2):
             self.player_hand.add_card(self.deck.draw())
             self.dealer_hand.add_card(self.deck.draw())
+        if self.player_hand.hand_sum() == 21:
+            self.outcome = "BLACKJACK"
+            self.state = RoundState.ROUND_OVER
         self.state = RoundState.PLAYER_TURN
 
     def need_player_decision(self):
