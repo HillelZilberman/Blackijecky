@@ -1,22 +1,33 @@
+"""
+Server application entry point.
+
+This module orchestrates the server lifecycle:
+- Starts TCP and UDP networking components
+- Accepts incoming client connections
+- Delegates gameplay handling to the server session logic
+
+"""
+
+
 import socket
 import threading
-
 from common.protocol import REQUEST_LEN, unpack_request
-from server.server_offer import get_local_ip, broadcast_offers
-from server.server_tcp import create_tcp_listen_socket, recv_exact
+from network.server.server_offer import get_local_ip, broadcast_offers
+from network.server.server_tcp import create_tcp_listen_socket, recv_exact
+from Session.server_session import run_server_session
 
 
 def main() -> None:
     server_name = input("Enter server name (max 32 chars): ").strip() or "BlackjackServer"
 
-    # 1) Start TCP server on an OS-chosen port
+    # Start TCP server on an OS-chosen port
     server_sock, tcp_port = create_tcp_listen_socket()
 
     ip = get_local_ip()
     print(f"Server started, listening on IP address {ip}")
     print(f"Broadcasting offers on UDP port 13122 (TCP port in offer = {tcp_port})")
 
-    # 2) Start UDP offer broadcaster in a background thread
+    # Start UDP offer broadcaster in a background thread
     stop_event = threading.Event()
     t = threading.Thread(
         target=broadcast_offers,
@@ -25,7 +36,7 @@ def main() -> None:
     )
     t.start()
 
-    # 3) Accept TCP clients forever
+    # Accept TCP clients forever
     try:
         while True:
             try:
@@ -41,6 +52,7 @@ def main() -> None:
                 data = recv_exact(client_sock, REQUEST_LEN)
                 req = unpack_request(data)
                 print(f"Received request: team={req.team_name}, rounds={req.rounds}")
+                run_server_session(client_sock, req.team_name, req.rounds)
             except Exception as e:
                 print(f"Error handling client {client_ip}:{client_port}: {e}")
             finally:

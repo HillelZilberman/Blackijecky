@@ -1,27 +1,49 @@
-import socket
+"""
+UDP offer listener for the client.
 
-from common.protocol import UDP_PORT_OFFER_LISTEN, unpack_offer
+This module is responsible for:
+- Creating a UDP socket bound to the offer listening port
+- Receiving and validating server offer messages
+- Filtering out corrupted or irrelevant packets
+
+It performs only server discovery (UDP) and does not handle
+TCP connections or game logic.
+
+A main() function is intended for testing/debugging only.
+"""
+
+
+import socket
+from common.protocol import UDP_PORT_OFFER_LISTEN, unpack_offer, ProtocolError
 
 
 def create_listen_socket() -> socket.socket:
     """
-    Create a UDP socket bound to the hardcoded offer port (13122).
-    SO_REUSEPORT is enabled to allow multiple clients on the same machine.
+    Create and bind a UDP socket for listening to server offer broadcasts.
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # Allow quick restart
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-    # Allow multiple clients on same computer to bind same UDP port (if supported)
-    if hasattr(socket, "SO_REUSEPORT"):
-        try:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        except OSError:
-            # Some Windows builds may not allow it even if present
-            pass
-
+    try:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    except (AttributeError, OSError):
+        pass
     s.bind(("", UDP_PORT_OFFER_LISTEN))
     return s
+
+
+def wait_for_offer(sock: socket.socket):
+    """
+    Block until a valid server offer is received and return the offer and server IP.
+    """
+    while True:
+        data, (server_ip, _) = sock.recvfrom(2048)
+        try:
+            offer = unpack_offer(data)
+            return offer, server_ip
+        except ProtocolError:
+            continue
+        except Exception:
+            continue
 
 
 def main() -> None:

@@ -11,7 +11,7 @@ class TestClientListener(unittest.TestCase):
         """
         Ensure the UDP socket binds to the hardcoded offer port (13122) and is UDP.
         """
-        from client.client_listener import create_listen_socket
+        from network.client.client_listener import create_listen_socket
 
         s = create_listen_socket()
         try:
@@ -24,8 +24,8 @@ class TestClientListener(unittest.TestCase):
         finally:
             s.close()
 
-    @patch("client.client_listener.unpack_offer")
-    @patch("client.client_listener.socket.socket")
+    @patch("network.client.client_listener.unpack_offer")
+    @patch("network.client.client_listener.socket.socket")
     def test_main_processes_one_offer_and_prints(self, mock_socket_cls, mock_unpack_offer):
         """
         Simulate receiving exactly one UDP packet and verify:
@@ -52,7 +52,7 @@ class TestClientListener(unittest.TestCase):
         mock_unpack_offer.return_value = fake_offer
 
         with patch("builtins.print") as mock_print:
-            from client.client_listener import main
+            from network.client.client_listener import main
             main()
 
         # Ensure unpack_offer called with the received bytes
@@ -68,8 +68,8 @@ class TestClientListener(unittest.TestCase):
         # Ensure socket was closed
         fake_sock.close.assert_called()
 
-    @patch("client.client_listener.unpack_offer")
-    @patch("client.client_listener.socket.socket")
+    @patch("network.client.client_listener.unpack_offer")
+    @patch("network.client.client_listener.socket.socket")
     def test_main_ignores_corrupted_packets(self, mock_socket_cls, mock_unpack_offer):
         """
         If unpack_offer raises an exception (corrupted packet), main should ignore it and continue.
@@ -86,7 +86,7 @@ class TestClientListener(unittest.TestCase):
         mock_unpack_offer.side_effect = ValueError("bad packet")
 
         with patch("builtins.print") as mock_print:
-            from client.client_listener import main
+            from network.client.client_listener import main
             main()
 
         # unpack_offer was attempted

@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import socket
 
 from common.protocol import unpack_offer
-from server.server_offer import (
+from network.server.server_offer import (
     get_local_ip,
     create_offer_socket,
 )
@@ -34,7 +34,7 @@ class TestServerOffer(unittest.TestCase):
         finally:
             s.close()
 
-    @patch("server.server_offer.socket.socket")
+    @patch("network.server.server_offer.socket.socket")
     def test_offer_packet_is_sent(self, mock_socket_cls):
         """
         Verify that an offer packet is sent via UDP.
@@ -42,7 +42,7 @@ class TestServerOffer(unittest.TestCase):
         mock_socket = MagicMock()
         mock_socket_cls.return_value = mock_socket
 
-        from server.server_offer import pack_offer
+        from network.server.server_offer import pack_offer
 
         tcp_port = 5000
         server_name = "TestServer"

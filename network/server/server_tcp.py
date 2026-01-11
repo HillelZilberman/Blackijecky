@@ -1,6 +1,16 @@
+"""
+TCP infrastructure utilities for the server.
+
+This module provides helper functions for:
+- Creating and configuring a TCP listening socket
+- Receiving fixed-length messages over TCP safely (recv_exact)
+
+A main() function is intended for testing/debugging only.
+"""
+
+
 import socket
 from typing import Tuple
-
 from common.protocol import REQUEST_LEN, unpack_request
 
 

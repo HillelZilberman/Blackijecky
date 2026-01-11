@@ -1,7 +1,19 @@
+"""
+UDP offer broadcaster for the server.
+
+This module is responsible for:
+- Creating a UDP broadcast socket
+- Periodically sending offer messages that advertise the server
+  name and TCP listening port
+
+It does not handle TCP connections or game logic.
+A main() function is intended for testing/debugging only.
+"""
+
+
 import socket
 import time
 import threading
-
 from common.protocol import pack_offer, UDP_PORT_OFFER_LISTEN
 
 
@@ -12,11 +24,10 @@ def get_local_ip() -> str:
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # Public IP is irrelevant here; no packets are actually sent.
         s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
     except OSError:
-        # Fallback (it may be 127.0.0.1 on some setups)
+        # Fallback
         return "127.0.0.1"
     finally:
         s.close()
@@ -47,18 +58,6 @@ def broadcast_offers(stop_event: threading.Event, server_name: str, tcp_port: in
         sock.close()
 
 def main() -> None:
-    """
-    Main entry point for the UDP Offer broadcaster.
-
-    At this stage, the server does not yet accept TCP connections.
-    A TCP port number is selected and embedded into the offer message
-    to advertise the port on which the server *will* listen once the
-    TCP game server is initialized.
-
-    Clients receiving this offer are expected to use the advertised
-    TCP port when establishing a connection in later stages.
-    """
-
     tcp_port = 5000
 
     server_name = input("Enter server name (max 32 chars): ").strip() or "BlackjackServer"

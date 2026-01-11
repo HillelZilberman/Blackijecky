@@ -1,4 +1,4 @@
-# common/protocol.py
+from __future__ import annotations
 """
 Application-layer protocol implementation for the Blackjack hackathon.
 
@@ -8,14 +8,9 @@ This module contains ONLY protocol concerns:
 - strict validation (cookie/type/length)
 - recv_exact helper for TCP streams
 
-It does NOT open sockets, does NOT implement game logic.
 """
-
-from __future__ import annotations
-
 import struct
 from dataclasses import dataclass
-from typing import Optional
 
 
 # =========================
@@ -34,10 +29,10 @@ NAME_LEN = 32
 DECISION_LEN = 5
 
 # Message lengths (bytes)
-OFFER_LEN = 4 + 1 + 2 + NAME_LEN          # 39
-REQUEST_LEN = 4 + 1 + 1 + NAME_LEN        # 38
-PAYLOAD_CLIENT_LEN = 4 + 1 + DECISION_LEN # 10
-PAYLOAD_SERVER_LEN = 4 + 1 + 1 + 3        # 9 (result + rank(2) + suit(1))
+OFFER_LEN = 4 + 1 + 2 + NAME_LEN           # 39
+REQUEST_LEN = 4 + 1 + 1 + NAME_LEN         # 38
+PAYLOAD_CLIENT_LEN = 4 + 1 + DECISION_LEN  # 10
+PAYLOAD_SERVER_LEN = 4 + 1 + 1 + 3         # 9 (result + rank(2) + suit(1))
 
 # Results (server -> client)
 RESULT_NOT_OVER = 0x0
@@ -46,10 +41,10 @@ RESULT_LOSS = 0x2
 RESULT_WIN = 0x3
 
 # Decisions (client -> server)
-DECISION_HIT = "Hittt"   # exactly 5 bytes
-DECISION_STAND = "Stand" # exactly 5 bytes
+DECISION_HIT = "Hittt"    # exactly 5 bytes
+DECISION_STAND = "Stand"  # exactly 5 bytes
 
-# Suit encoding order (HDCS) - for your own consistency checks/logging
+# Suit encoding order (HDCS)
 SUIT_H = 0
 SUIT_D = 1
 SUIT_C = 2
@@ -65,7 +60,7 @@ class ProtocolError(ValueError):
 
 
 # =========================
-# Data classes (optional, convenient)
+# Data classes
 # =========================
 
 @dataclass(frozen=True)
@@ -195,7 +190,7 @@ def unpack_payload_decision(data: bytes) -> str:
 def pack_payload_server(result: int, rank: int, suit: int) -> bytes:
     if not (0 <= result <= 255):
         raise ProtocolError(f"Result must fit 1 byte: {result}")
-    # Strict check as per spec (1..13 and 0..3); allow 0 if you want "no card" semantics.
+    # Strict check as per spec (1..13 and 0..3)
     _validate_rank_suit(rank, suit)
     # card_value is 3 bytes: rank (2 bytes) + suit (1 byte)
     card_bytes = struct.pack("!HB", rank, suit)

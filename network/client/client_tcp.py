@@ -1,7 +1,29 @@
+"""
+TCP infrastructure utilities for the client.
+
+This module handles:
+- Establishing a TCP connection to the server
+- Sending the initial game request message (Request packet)
+
+A main() function is intended for testing/debugging only.
+"""
+
+
 import socket
 import sys
-
 from common.protocol import pack_request
+
+
+def connect_and_send_request(server_ip: str, tcp_port: int, team_name: str, rounds: int) -> socket.socket:
+    """
+    Establish a TCP connection to the server and send the initial game request.
+    Returns the connected TCP socket.
+    """
+    req_bytes = pack_request(rounds=rounds, team_name=team_name)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((server_ip, tcp_port))
+    s.sendall(req_bytes)
+    return s
 
 
 def main() -> None:
