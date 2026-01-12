@@ -138,7 +138,7 @@ def run_client_session(tcp_sock: socket.socket, rounds: int) -> None:
                 dealer_cards.append(card_str)
                 dealer_ranks.append(payload.rank)
 
-            # If server ended immediately (rare), handle it.
+            # If server ended immediately (BLACKJACK), handle it.
             if payload.result != RESULT_NOT_OVER:
                 _print_state(player_cards, dealer_cards, player_ranks, dealer_ranks, hide_dealer_second=True)
                 print(f"Result: {_result_to_text(payload.result)}")
