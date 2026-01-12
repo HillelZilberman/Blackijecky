@@ -9,7 +9,7 @@ This module orchestrates the client lifecycle:
 """
 
 
-from Session.client_session import run_client_session
+from session.client_session import run_client_session
 from common.protocol import UDP_PORT_OFFER_LISTEN
 from network.client.client_listener import create_listen_socket, wait_for_offer
 from network.client.client_tcp import connect_and_send_request

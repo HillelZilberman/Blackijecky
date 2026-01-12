@@ -14,7 +14,7 @@ import threading
 from common.protocol import REQUEST_LEN, unpack_request
 from network.server.server_offer import get_local_ip, broadcast_offers
 from network.server.server_tcp import create_tcp_listen_socket, recv_exact
-from Session.server_session import run_server_session
+from session.server_session import run_server_session
 
 
 def main() -> None:

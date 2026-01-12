@@ -4,7 +4,7 @@
 
 
 from game_engine.Round import RoundState
-from Session.GameSession import GameSession
+from session.game_session import GameSession
 
 
 
