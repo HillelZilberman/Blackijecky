@@ -11,10 +11,42 @@ This module orchestrates the server lifecycle:
 
 import socket
 import threading
+
 from common.protocol import REQUEST_LEN, unpack_request
 from network.server.server_offer import get_local_ip, broadcast_offers
 from network.server.server_tcp import create_tcp_listen_socket, recv_exact
 from session.server_session import run_server_session
+
+
+def handle_client(client_sock: socket.socket, client_ip: str, client_port: int) -> None:
+    """
+    Handle a single TCP client in its own thread.
+    Reads the client's Request, then runs a full game session for that client.
+    """
+    tag = f"[{client_ip}:{client_port}]"
+    try:
+        print(f"{tag} Accepted TCP connection")
+
+        data = recv_exact(client_sock, REQUEST_LEN)
+        req = unpack_request(data)
+
+        print(f"{tag} Received request: team={req.team_name}, rounds={req.rounds}")
+
+        # Run this client's game session (blocking, but only in this thread)
+        run_server_session(client_sock, req.team_name, req.rounds)
+
+    except Exception as e:
+        print(f"{tag} Error handling client: {e}")
+
+    finally:
+        try:
+            client_sock.close()
+        except Exception:
+            pass
+        if req:
+            print(f"{tag} Closed connection with {req.team_name}")
+        else:
+            print(f"{tag} Closed connection")
 
 
 def main() -> None:
@@ -36,7 +68,7 @@ def main() -> None:
     )
     t.start()
 
-    # Accept TCP clients forever
+    # Accept TCP clients forever (each client handled in its own thread)
     try:
         while True:
             try:
@@ -46,24 +78,22 @@ def main() -> None:
             except KeyboardInterrupt:
                 raise
 
-            print(f"Accepted TCP connection from {client_ip}:{client_port}")
-
-            try:
-                data = recv_exact(client_sock, REQUEST_LEN)
-                req = unpack_request(data)
-                print(f"Received request: team={req.team_name}, rounds={req.rounds}")
-                run_server_session(client_sock, req.team_name, req.rounds)
-            except Exception as e:
-                print(f"Error handling client {client_ip}:{client_port}: {e}")
-            finally:
-                client_sock.close()
-                print(f"Closed connection to {client_ip}:{client_port}")
+            # IMPORTANT CHANGE: spawn a new thread per client
+            client_thread = threading.Thread(
+                target=handle_client,
+                args=(client_sock, client_ip, client_port),
+                daemon=True,
+            )
+            client_thread.start()
 
     except KeyboardInterrupt:
         print("\nStopping server (Ctrl+C).")
     finally:
         stop_event.set()
-        server_sock.close()
+        try:
+            server_sock.close()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

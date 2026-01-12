@@ -41,7 +41,7 @@ def main() -> None:
                 tcp_sock = connect_and_send_request(server_ip, offer.tcp_port, team_name, rounds)
                 run_client_session(tcp_sock, rounds)
             except Exception as e:
-                print(f"Failed to connect/run session with {server_ip}:{offer.tcp_port}: {e}")
+                print(f"Failed to connect/run session with {offer.server_name}:{offer.tcp_port}: {e}")
             finally:
                 if tcp_sock:
                     tcp_sock.close()
