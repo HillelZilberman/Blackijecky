@@ -28,6 +28,7 @@ def create_listen_socket() -> socket.socket:
     except (AttributeError, OSError):
         pass
     s.bind(("", UDP_PORT_OFFER_LISTEN))
+    s.settimeout(1.0)
     return s
 
 
@@ -36,7 +37,10 @@ def wait_for_offer(sock: socket.socket):
     Block until a valid server offer is received and return the offer and server IP.
     """
     while True:
-        data, (server_ip, _) = sock.recvfrom(2048)
+        try:
+            data, (server_ip, _) = sock.recvfrom(2048)
+        except socket.timeout:
+            continue
         try:
             offer = unpack_offer(data)
             return offer, server_ip

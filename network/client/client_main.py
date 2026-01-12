@@ -40,6 +40,9 @@ def main() -> None:
             try:
                 tcp_sock = connect_and_send_request(server_ip, offer.tcp_port, team_name, rounds)
                 run_client_session(tcp_sock, rounds)
+            except KeyboardInterrupt:
+                print("\nStopping client (Ctrl+C).")
+                raise
             except Exception as e:
                 print(f"Failed to connect/run session with {offer.server_name}:{offer.tcp_port}: {e}")
             finally:
@@ -47,6 +50,9 @@ def main() -> None:
                     tcp_sock.close()
 
             print("Returning to listen for offers...\n")
+            # Clean offers buffer by creating new UDP socket
+            udp_sock.close()
+            udp_sock = create_listen_socket()
 
     except KeyboardInterrupt:
         print("\nStopping client (Ctrl+C).")

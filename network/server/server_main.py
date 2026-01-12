@@ -43,10 +43,9 @@ def handle_client(client_sock: socket.socket, client_ip: str, client_port: int) 
             client_sock.close()
         except Exception:
             pass
-        if req:
-            print(f"{tag} Closed connection with {req.team_name}")
-        else:
-            print(f"{tag} Closed connection")
+
+        print(f"{tag} Closed connection")
+
 
 
 def main() -> None:
