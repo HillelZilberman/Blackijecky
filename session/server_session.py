@@ -87,6 +87,49 @@ def _send_card(sock: socket.socket, card, result_code: int) -> None:
     pkt = pack_payload_server(result=result_code, rank=rank, suit=suit)
     sock.sendall(pkt)
 
+def handle_stand_and_send_dealer(
+    client_sock,
+    rnd,
+    sent_dealer
+):
+    """
+    Handle STAND decision:
+    - Let dealer play
+    - Send all unseen dealer cards to client
+    - Attach outcome to the last sent card
+    - Return updated sent_dealer
+    """
+
+    # Dealer plays (reveal hidden card + draw until 17+)
+    before_d = len(rnd.dealer_hand.hand)
+    rnd.apply_player_decision("STAND")
+    after_d = len(rnd.dealer_hand.hand)
+
+    # Cards the client has not seen yet
+    new_cards = rnd.dealer_hand.hand[sent_dealer:after_d]
+    if not new_cards and after_d > 0:
+        # Defensive fallback if sent_dealer is wrong
+        new_cards = rnd.dealer_hand.hand[1:after_d]
+
+    # Send dealer cards; last one carries the outcome
+    for i, c in enumerate(new_cards):
+        is_last = (i == len(new_cards) - 1)
+        if is_last and rnd.outcome in ("WIN", "LOSS", "TIE", "BLACKJACK"):
+            result_code = _outcome_to_result_code(rnd.outcome)
+        else:
+            result_code = RESULT_NOT_OVER
+        _send_card(client_sock, c, result_code)
+
+    sent_dealer = after_d
+
+    # Edge case: no new cards were sent, but outcome exists
+    if rnd.outcome in ("WIN", "LOSS", "TIE", "BLACKJACK") and len(new_cards) == 0:
+        ref_card = rnd.dealer_hand.hand[-1] if rnd.dealer_hand.hand else rnd.player_hand.hand[-1]
+        _send_card(client_sock, ref_card, _outcome_to_result_code(rnd.outcome))
+
+    return sent_dealer
+
+
 
 def run_server_session(client_sock: socket.socket, team_name: str, rounds: int) -> None:
     """
@@ -167,46 +210,11 @@ def run_server_session(client_sock: socket.socket, team_name: str, rounds: int) 
                         break
 
                 elif decision == DECISION_STAND:
-                    # Stand triggers dealer turn inside apply_player_decision (per your Round code).
-                    before_d = len(rnd.dealer_hand.hand)
-                    rnd.apply_player_decision("STAND")
-                    after_d = len(rnd.dealer_hand.hand)
-
-                    # Dealer hidden card becomes visible + possible extra draws.
-                    # Send all new dealer cards since the up-card (client hasn't seen them yet).
-                    # Note: client only saw dealer_cards[0] so far.
-                    new_cards = rnd.dealer_hand.hand[sent_dealer:after_d]
-                    if not new_cards and after_d > 0:
-                        # Very defensive: if somehow we didn't track sent_dealer properly, fall back.
-                        new_cards = rnd.dealer_hand.hand[1:after_d]
-
-                    for i, c in enumerate(new_cards):
-                        # Last card we send should carry the final result (if round ended).
-                        is_last = (i == len(new_cards) - 1)
-                        if is_last and rnd.outcome in ("WIN", "LOSS", "TIE", "BLACKJACK"):
-                            result_code = _outcome_to_result_code(rnd.outcome)
-                        else:
-                            result_code = RESULT_NOT_OVER
-                        _send_card(client_sock, c, result_code)
-
-                    sent_dealer = after_d
-
-                    # If the dealer didn't draw any card (rare, but possible if reveal-only),
-                    # still send a final result by repeating the hidden card (or up-card).
-                    if rnd.outcome in ("WIN", "LOSS", "TIE", "BLACKJACK") and len(new_cards) == 0:
-                        ref_card = rnd.dealer_hand.hand[-1] if rnd.dealer_hand.hand else rnd.player_hand.hand[-1]
-                        _send_card(client_sock, ref_card, _outcome_to_result_code(rnd.outcome))
-
-                    break
+                    sent_dealer = handle_stand_and_send_dealer(client_sock, rnd, sent_dealer);
                 else:
                     # Unknown decision - treat as stand for safety
-                    before_d = len(rnd.dealer_hand.hand)
-                    rnd.apply_player_decision("STAND")
-                    after_d = len(rnd.dealer_hand.hand)
-                    for c in rnd.dealer_hand.hand[sent_dealer:after_d]:
-                        _send_card(client_sock, c, RESULT_NOT_OVER)
-                    _send_card(client_sock, rnd.dealer_hand.hand[-1], _outcome_to_result_code(rnd.outcome))
-                    sent_dealer = after_d
+                    print(f"[WARN] Unknown decision={decision}. Treating as STAND.")
+                    sent_dealer = handle_stand_and_send_dealer(client_sock, rnd, sent_dealer)
                     break
             else:
                 # No player decision needed; if this happens, we assume round is over.
@@ -219,5 +227,4 @@ def run_server_session(client_sock: socket.socket, team_name: str, rounds: int) 
 
     print(
         f"[SESSION] Done. stats: wins={session.wins}, losses={session.losses}, ties={session.ties} "
-
     )
